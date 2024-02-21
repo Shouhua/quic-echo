@@ -63,8 +63,15 @@ static int recv_stream_data_cb(ngtcp2_conn *conn __attribute__((unused)),
 							   void *stream_user_data __attribute__((unused)))
 {
 	Connection *connection = user_data;
-	Stream *stream = connection_find_stream(connection, stream_id);
+	struct sockaddr_storage *ss = connection_get_remote_addr(connection);
+	char ip[INET_ADDRSTRLEN];
+	uint16_t port;
+	(void)get_ip_port(ss, ip, &port);
+	fprintf(stdout, "(%s, %d) sent %ld bytes: ", ip, port, datalen);
+	fwrite(data, datalen, 1, stdout);
+	fprintf(stdout, "\n");
 
+	Stream *stream = connection_find_stream(connection, stream_id);
 	if (stream)
 		stream_push_data(stream, (uint8_t *)data, datalen);
 
@@ -116,6 +123,18 @@ int get_new_connection_id_cb(ngtcp2_conn *conn, ngtcp2_cid *cid,
 	return 0;
 }
 
+static int handle_handshake_completed(ngtcp2_conn *conn, void *userdata)
+{
+	(void)conn;
+	Connection *connection = (Connection *)userdata;
+	struct sockaddr_storage *addr = connection_get_remote_addr(connection);
+	char ip[INET_ADDRSTRLEN];
+	uint16_t port;
+	(void)get_ip_port(addr, ip, &port);
+	fprintf(stdout, "(%s, %d) connected\n", ip, port);
+	return 0;
+}
+
 static const ngtcp2_callbacks callbacks =
 	{
 		/* Use the default implementation from ngtcp2_crypto */
@@ -135,6 +154,7 @@ static const ngtcp2_callbacks callbacks =
 		.stream_open = stream_open_cb,
 		.rand = rand_cb,
 		.get_new_connection_id = get_new_connection_id_cb,
+		.handshake_completed = handle_handshake_completed,
 };
 
 static Connection *accept_connection(Server *server,
@@ -326,7 +346,19 @@ static int handle_incoming(Server *server)
 		ret = ngtcp2_conn_read_pkt(conn, &path, &pi, buf, n_read, timestamp());
 		if (ret < 0)
 		{
-			fprintf(stderr, "ngtcp2_conn_read_pkt: %s\n", ngtcp2_strerror(ret));
+			if (ret == NGTCP2_ERR_DRAINING)
+			{
+				struct sockaddr_storage *addr = connection_get_remote_addr(connection);
+				char ip[INET_ADDRSTRLEN];
+				uint16_t port;
+				(void)get_ip_port(addr, ip, &port);
+
+				fprintf(stdout, "(%s, %d) closed\n", ip, port);
+			}
+			else
+			{
+				fprintf(stderr, "ngtcp2_conn_read_pkt: %s\n", ngtcp2_strerror(ret));
+			}
 
 			ret = epoll_ctl(server->epoll_fd, EPOLL_CTL_DEL,
 							connection_get_timer_fd(connection),
@@ -372,6 +404,11 @@ static int run(Server *server)
 		perror("epoll_ctl");
 		return -1;
 	}
+
+	uint16_t port;
+	(void)get_ip_port(&server->local_addr, NULL, &port);
+
+	fprintf(stdout, "Now quic echo server is listening on %d\n", port);
 	for (;;)
 	{
 		struct epoll_event events[MAX_EVENTS];

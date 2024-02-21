@@ -55,11 +55,13 @@ ngtcp2_conn *connection_get_ngtcp2_connection(Connection *conn)
 	return conn->nt2_conn;
 }
 
-struct sockaddr *
-connection_get_local_addr(Connection *conn, size_t *local_addrlen)
+struct sockaddr_storage *connection_get_local_addr(Connection *conn)
 {
-	*local_addrlen = conn->local_addrlen;
-	return (struct sockaddr *)&conn->local_addr;
+	return &conn->local_addr;
+}
+struct sockaddr_storage *connection_get_remote_addr(Connection *conn)
+{
+	return &conn->remote_addr;
 }
 
 void connection_set_local_addr(Connection *conn,

@@ -172,3 +172,28 @@ int gen_random_cid(ngtcp2_cid *cid)
 
 	return 0;
 }
+
+int get_ip_port(struct sockaddr_storage *addr, char *ip, uint16_t *port)
+{
+	if (ip == NULL && port == NULL)
+		return 0;
+	if (addr->ss_family == AF_INET)
+	{
+		struct sockaddr_in *addrV4 = (struct sockaddr_in *)addr;
+		if (port)
+			*port = ntohs(addrV4->sin_port);
+		if (ip)
+			inet_ntop(addrV4->sin_family, &(addrV4->sin_addr), ip, INET_ADDRSTRLEN);
+		return 0;
+	}
+	else if (addr->ss_family == AF_INET6)
+	{
+		struct sockaddr_in6 *addrV6 = (struct sockaddr_in6 *)addr;
+		if (ip)
+			inet_ntop(addrV6->sin6_family, &(addrV6->sin6_addr), ip, INET6_ADDRSTRLEN);
+		if (port)
+			*port = ntohs(addrV6->sin6_port);
+		return 0;
+	}
+	return -1;
+}

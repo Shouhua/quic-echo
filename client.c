@@ -73,7 +73,7 @@ static int recv_stream_data_cb(ngtcp2_conn *conn __attribute__((unused)),
 {
 	char buf[datalen + 1];
 	snprintf(buf, datalen + 1, "%s", data);
-	fprintf(stdout, "收到 %zu 字节 from stream #%zd: %s\n", datalen, stream_id, buf);
+	fprintf(stdout, "Received %zu bytes from stream #%zd: %s\n", datalen, stream_id, buf);
 	return 0;
 }
 
@@ -309,7 +309,6 @@ int handle_sig(Client *c)
 		connection_close(c->connection, NGTCP2_APPLICATION_ERROR);
 		connection_free(c->connection);
 	}
-	free(c);
 	exit(0);
 }
 
