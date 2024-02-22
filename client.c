@@ -168,6 +168,8 @@ static int handle_stdin(Client *client)
 	size_t n_read = 0;
 	int ret;
 
+	memset(buf, 0, BUF_SIZE);
+
 	while (n_read < sizeof(buf))
 	{
 		ret = read(STDIN_FILENO, buf + n_read, sizeof(buf) - n_read);
@@ -190,6 +192,50 @@ static int handle_stdin(Client *client)
 	{
 		fprintf(stderr, "read buffer overflow\n");
 		return -1;
+	}
+
+	/*
+	handle internal command
+	\show
+	\set streams [NUMBER|1]
+	\set coalesing [NUMBER|1]
+	*/
+	int res;
+	res = memcmp("\\show", buf, 5);
+	if (res == 0)
+	{
+		fprintf(stdout, "streams: %ld, coalescing: %ld\n", client->n_streams, client->n_coalescing);
+		return 0;
+	}
+
+	res = memcmp("\\set", buf, 4);
+	if (res == 0)
+	{
+		char *key_value;
+		long value;
+		key_value = strstr((char *)buf, "streams");
+		if (key_value)
+		{
+			value = strtol(key_value + 8, NULL, 10);
+#ifdef DEBUG
+			fprintf(stdout, "set streams to %ld\n", value);
+#endif
+			client->n_streams = value;
+			return 0;
+		}
+		else
+		{
+			key_value = strstr((char *)buf, "coalescing");
+			if (key_value)
+			{
+				value = strtol(key_value + 11, NULL, 10);
+#ifdef DEBUG
+				fprintf(stdout, "set coalescing to %ld\n", value);
+#endif
+				client->n_coalescing = value;
+				return 0;
+			}
+		}
 	}
 
 	if (!client->streams[client->stream_index])
@@ -234,7 +280,10 @@ static int handle_stdin(Client *client)
 			return -1;
 
 #ifdef DEBUG
-		fprintf(stdout, "buffered %zd bytes\n", n_read);
+		fprintf(stdout, "#%ld[%ld] buffered %zd bytes\n",
+				stream_get_id(client->streams[client->stream_index]),
+				client->stream_index,
+				n_read);
 #endif
 
 		if (++client->coalesce_count < client->n_coalescing)

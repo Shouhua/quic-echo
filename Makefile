@@ -17,9 +17,9 @@ PEDANTIC=-pedantic
 CFLAGS= -g -Wall -Wextra \
 	${PEDANTIC} \
 	${RPATH} \
+	# -DDEBUG \
 	# ${CREF} \
 	# ${TRACE} \
-	# -DDEBUG
 
 # quictls(openssl)
 LDFLAGS=-L/usr/local/lib64 

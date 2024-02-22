@@ -67,7 +67,7 @@ static int recv_stream_data_cb(ngtcp2_conn *conn __attribute__((unused)),
 	char ip[INET_ADDRSTRLEN];
 	uint16_t port;
 	(void)get_ip_port(ss, ip, &port);
-	fprintf(stdout, "(%s, %d) sent %ld bytes: ", ip, port, datalen);
+	fprintf(stdout, "(%s, %d) sent %ld bytes on #%ld: ", ip, port, datalen, stream_id);
 	fwrite(data, datalen, 1, stdout);
 	fprintf(stdout, "\n");
 

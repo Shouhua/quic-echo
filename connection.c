@@ -102,7 +102,7 @@ void connection_free(Connection *conn)
 
 void connection_add_stream(Connection *conn, Stream *stream)
 {
-	list_add_tail(&conn->streams, stream_get_link(stream));
+	list_add_tail(stream_get_link(stream), &conn->streams);
 }
 
 Stream *connection_find_stream(Connection *conn, int64_t stream_id)
