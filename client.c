@@ -11,6 +11,12 @@
 #include "stream.h"
 #include "utils.h"
 
+#ifdef __GNUC__
+#define UNUSED __attribute__ ((unused))
+#else
+#define UNUSED
+#endif
+
 #define MAX_STREAMS 10
 #define MAX_EVENTS 64
 
@@ -77,7 +83,7 @@ static int recv_stream_data_cb(ngtcp2_conn *conn __attribute__((unused)),
 	return 0;
 }
 
-static int handle_handshake_completed(ngtcp2_conn *conn, void *userdata)
+UNUSED static int handle_handshake_completed(ngtcp2_conn *conn, void *userdata)
 {
 	(void)userdata;
 	ngtcp2_duration timeout;
@@ -194,12 +200,6 @@ static int handle_stdin(Client *client)
 		return -1;
 	}
 
-	/*
-	handle internal command
-	\show
-	\set streams [NUMBER|1]
-	\set coalesing [NUMBER|1]
-	*/
 	int res;
 	res = memcmp("\\show", buf, 5);
 	if (res == 0)
@@ -274,8 +274,10 @@ static int handle_stdin(Client *client)
 
 	if (client->streams[client->stream_index])
 	{
+		uint8_t *input_data = (uint8_t *)malloc(sizeof(uint8_t) * n_read);
+		memcpy(input_data, buf, n_read);
 		ret = stream_push_data(client->streams[client->stream_index],
-							   buf, n_read);
+							   input_data, n_read);
 		if (ret < 0)
 			return -1;
 
@@ -599,7 +601,7 @@ int main(int argc, char *argv[])
 		.recv_stream_data = recv_stream_data_cb,
 		.rand = rand_cb,
 		.get_new_connection_id = get_new_connection_id_cb,
-		.handshake_completed = handle_handshake_completed,
+		// .handshake_completed = handle_handshake_completed,
 	};
 	ngtcp2_cid dcid, scid;
 	ngtcp2_settings settings;
@@ -645,7 +647,6 @@ int main(int argc, char *argv[])
 	connection_set_ngtcp2_connection(conn, nt2_conn, nt2_conn_ref);
 	connection_start(conn);
 
-	// TODO 全局或者用户选择n_streams, n_coalescing
 	client.n_streams = 1;
 	client.n_coalescing = 1;
 	client.coalesce_count = 0;

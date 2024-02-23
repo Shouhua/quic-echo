@@ -29,6 +29,7 @@ void stream_free(Stream *s)
 	{
 		Stream_Data *sd = list_entry(el, Stream_Data, link);
 		list_del(el);
+		free(sd->data);
 		free(sd);
 	}
 	free(s);
@@ -64,7 +65,7 @@ int stream_push_data(Stream *s, uint8_t *data, size_t data_size)
 	sd->data = data;
 	sd->data_size = data_size;
 	init_list_head(&sd->link);
-	list_add_tail(&(sd->link), &s->buffer);
+	list_add_tail(&sd->link, &s->buffer);
 	return 0;
 }
 

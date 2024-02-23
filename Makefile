@@ -62,6 +62,7 @@ run: all
 	tmux new-session -s quic -c ${PROJECT_ROOT_DIR} -d; \
 	tmux split-window -t quic -v -l 10; \
 	tmux send-keys -t quic:0.0 "make run_server" C-m; \
+	sleep 0.5; \
 	tmux send-keys -t quic:0.1 "make run_client" C-m; \
 	if [[ -z "$$TMUX" ]]; then tmux attach-session -t quic; else tmux switch-client -t quic; fi;
 
