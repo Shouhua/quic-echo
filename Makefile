@@ -3,6 +3,7 @@ PROJECT_ROOT_DIR := $(shell pwd)
 CA := ${PROJECT_ROOT_DIR}/certs/ca.pem
 SERVER_CERT := ${PROJECT_ROOT_DIR}/certs/server_cert.pem
 SERVER_KEY := ${PROJECT_ROOT_DIR}/certs/server_key.pem
+HOST := localhost
 PORT := 4433
 SRC = $(wildcard *.c)
 CLIENT_SRC = $(filter-out server.c, ${SRC})
@@ -40,10 +41,10 @@ client: build_dir ${CLIENT_SRC}
 		-lngtcp2 -lngtcp2_crypto_quictls
 
 run_client: client
-	@SSLKEYLOGFILE="${PROJECT_ROOT_DIR}/keylog.txt" ./build/client "localhost" ${PORT} ${CA}
+	@SSLKEYLOGFILE="${PROJECT_ROOT_DIR}/keylog.txt" ./build/client ${HOST} ${PORT} ${CA}
 
 debug_client: client
-	@SSLKEYLOGFILE="${PROJECT_ROOT_DIR}/keylog.txt" gdb --args ./build/client "localhost" ${PORT} ${CA}
+	@SSLKEYLOGFILE="${PROJECT_ROOT_DIR}/keylog.txt" gdb --args ./build/client ${HOST} ${PORT} ${CA}
 
 server: build_dir ${SERVER_SRC}
 	@gcc ${CFLAGS} -o build/$@ ${SERVER_SRC}  \
@@ -52,13 +53,13 @@ server: build_dir ${SERVER_SRC}
 		-lngtcp2 -lngtcp2_crypto_quictls
 
 run_server: server
-	@./build/server localhost ${PORT} ${SERVER_CERT} ${SERVER_KEY}
+	@./build/server ${HOST} ${PORT} ${SERVER_CERT} ${SERVER_KEY}
 	
 debug_server: server
-	@gdb --args ./build/server localhost ${PORT} ${SERVER_CERT} ${SERVER_KEY}
+	@gdb --args ./build/server ${HOST} ${PORT} ${SERVER_CERT} ${SERVER_KEY}
 
 run: all
-	@if tmux has-session -t quic > /dev/null 2>&1; then tmux kill-session -t quic; fi; \
+	@if tmux has-session -t quic &> /dev/null; then tmux kill-session -t quic; fi; \
 	tmux new-session -s quic -c ${PROJECT_ROOT_DIR} -d; \
 	tmux split-window -t quic -v -l 10; \
 	tmux send-keys -t quic:0.0 "make run_server" C-m; \

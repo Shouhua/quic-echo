@@ -8,6 +8,8 @@ CA="ca.pem"
 CA_KEY="ca_key.pem"
 SERVER_CERT="server_cert.pem"
 SERVER_KEY="server_key.pem"
+HOST="localhost"
+IP="127.0.0.1"
 
 # NOTICE quictls
 export LD_LIBRARY_PATH=/usr/local/lib64
@@ -34,7 +36,7 @@ openssl req -x509\
     -keyout "${SERVER_KEY}" \
     -out "${SERVER_CERT}" \
     -subj "/C=CN/ST=Hubei/L=Wuhan/O=QUIC/OU=QUICUNIT/CN=localhost/emailAddress=server@example.com" \
-    -addext "subjectAltName=DNS:localhost" \
+    -addext "subjectAltName=DNS:${HOST},IP:${IP}" \
     -CA "${CA}" \
     -CAkey "${CA_KEY}" \
     -copy_extensions copyall \

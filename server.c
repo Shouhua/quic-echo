@@ -201,7 +201,7 @@ static Connection *accept_connection(Server *server,
 	params.initial_max_streams_bidi = 3;
 	params.initial_max_stream_data_bidi_local = 128 * 1024;
 	params.initial_max_stream_data_bidi_remote = 128 * 1024;
-	// params.max_idle_timeout = 10 * NGTCP2_SECONDS;
+	params.max_idle_timeout = 10 * NGTCP2_SECONDS;
 	params.initial_max_data = 1024 * 1024;
 	params.original_dcid = header.dcid;
 	params.original_dcid_present = 1;

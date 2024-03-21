@@ -12,7 +12,7 @@
 #include "utils.h"
 
 #ifdef __GNUC__
-#define UNUSED __attribute__ ((unused))
+#define UNUSED __attribute__((unused))
 #else
 #define UNUSED
 #endif
@@ -630,7 +630,7 @@ int main(int argc, char *argv[])
 	params.initial_max_streams_uni = 3;
 	params.initial_max_stream_data_bidi_local = 128 * 1024;
 	params.initial_max_data = 1024 * 1024;
-	// params.max_idle_timeout = 10 * NGTCP2_SECONDS;
+	params.max_idle_timeout = 20 * NGTCP2_SECONDS;
 
 	rv = ngtcp2_conn_client_new(&nt2_conn, &dcid, &scid, &path, NGTCP2_PROTO_VER_V1,
 								&callbacks, &settings, &params, NULL, client.connection);
