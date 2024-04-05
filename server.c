@@ -496,7 +496,7 @@ int main(int argc, char *argv[])
 	init_list_head(&server.connections);
 
 	server.sock_fd = resolve_and_bind(
-		argv[1],
+		NULL,
 		argv[2],
 		(struct sockaddr *)&server.local_addr,
 		&server.local_addrlen);

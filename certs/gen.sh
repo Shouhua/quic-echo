@@ -4,11 +4,11 @@
 
 set -eou pipefail
 
-CA="ca.pem"
+CA="ca_cert.pem"
 CA_KEY="ca_key.pem"
 SERVER_CERT="server_cert.pem"
 SERVER_KEY="server_key.pem"
-HOST="localhost"
+HOST="quic.web"
 IP="127.0.0.1"
 
 # NOTICE quictls

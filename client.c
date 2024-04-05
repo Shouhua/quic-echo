@@ -83,9 +83,9 @@ static int recv_stream_data_cb(ngtcp2_conn *conn __attribute__((unused)),
 	return 0;
 }
 
-UNUSED static int handle_handshake_completed(ngtcp2_conn *conn, void *userdata)
+static int handle_handshake_completed(ngtcp2_conn *conn, void *userdata)
 {
-	(void)userdata;
+	Connection *connection = (Connection *)userdata;
 	ngtcp2_duration timeout;
 	const ngtcp2_transport_params *params;
 	params = ngtcp2_conn_get_remote_transport_params(conn);
@@ -98,6 +98,12 @@ UNUSED static int handle_handshake_completed(ngtcp2_conn *conn, void *userdata)
 	timeout = params->max_idle_timeout == 0 ? 0 : params->max_idle_timeout / NGTCP2_SECONDS - 1;
 
 	ngtcp2_conn_set_keep_alive_timeout(conn, timeout * NGTCP2_SECONDS);
+
+	struct sockaddr_storage *ss = connection_get_remote_addr(connection);
+	char ip[INET_ADDRSTRLEN];
+	uint16_t port;
+	(void)get_ip_port(ss, ip, &port);
+	fprintf(stdout, "Successfully connected to (%s, %d)\n", ip, port);
 	return 0;
 }
 
@@ -601,7 +607,7 @@ int main(int argc, char *argv[])
 		.recv_stream_data = recv_stream_data_cb,
 		.rand = rand_cb,
 		.get_new_connection_id = get_new_connection_id_cb,
-		// .handshake_completed = handle_handshake_completed,
+		.handshake_completed = handle_handshake_completed,
 	};
 	ngtcp2_cid dcid, scid;
 	ngtcp2_settings settings;
@@ -630,7 +636,7 @@ int main(int argc, char *argv[])
 	params.initial_max_streams_uni = 3;
 	params.initial_max_stream_data_bidi_local = 128 * 1024;
 	params.initial_max_data = 1024 * 1024;
-	params.max_idle_timeout = 20 * NGTCP2_SECONDS;
+	params.max_idle_timeout = 60 * NGTCP2_SECONDS;
 
 	rv = ngtcp2_conn_client_new(&nt2_conn, &dcid, &scid, &path, NGTCP2_PROTO_VER_V1,
 								&callbacks, &settings, &params, NULL, client.connection);
