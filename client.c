@@ -504,6 +504,18 @@ void keylog_callback(const SSL *ssl, const char *line)
 	close(keylogfile);
 }
 
+int recv_crypto_data(ngtcp2_conn *conn,
+                     ngtcp2_encryption_level encryption_level, uint64_t offset,
+                     const uint8_t *data, size_t datalen, void *user_data)
+{
+#ifdef DEBUG
+	char *res = format_hex(data, datalen);
+	fprintf(stdout, "recv crypto data: %s\n", res);
+	free(res);
+#endif
+	return ngtcp2_crypto_recv_crypto_data_cb(conn, encryption_level, offset, data, datalen, user_data);
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc != 4)
@@ -593,7 +605,7 @@ int main(int argc, char *argv[])
 	ngtcp2_callbacks callbacks = {
 		/* Use the default implementation from ngtcp2_crypto */
 		.client_initial = ngtcp2_crypto_client_initial_cb,
-		.recv_crypto_data = ngtcp2_crypto_recv_crypto_data_cb,
+		.recv_crypto_data = recv_crypto_data,
 		.encrypt = ngtcp2_crypto_encrypt_cb,
 		.decrypt = ngtcp2_crypto_decrypt_cb,
 		.hp_mask = ngtcp2_crypto_hp_mask_cb,

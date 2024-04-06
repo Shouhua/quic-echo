@@ -1,5 +1,21 @@
 #include "utils.h"
 
+const char LOWER_XDIGITS[] = "0123456789abcdef";
+
+char *format_hex(const uint8_t *s, size_t len)
+{
+	size_t alloc_size = len * sizeof(char) * 2 + 1;
+	char *res = (char *)malloc(alloc_size);
+	memset(res, '\0', alloc_size);
+	for (size_t i = 0; i < len; i++)
+	{
+		uint8_t c = s[i];
+		res[i * 2] = LOWER_XDIGITS[c >> 4];
+		res[i * 2 + 1] = LOWER_XDIGITS[c & 0x0f];
+	}
+	return res;
+}
+
 int resolve_and_connect(const char *host, const char *port,
 						struct sockaddr *local_addr, size_t *local_addrlen,
 						struct sockaddr *remote_addr, size_t *remote_addrlen)

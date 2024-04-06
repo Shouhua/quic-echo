@@ -16,6 +16,8 @@
 #include <ngtcp2/ngtcp2.h>
 #include <openssl/rand.h>
 
+char *format_hex(const uint8_t *s, size_t len);
+
 int resolve_and_connect(const char *host, const char *port,
 						struct sockaddr *local_addr, size_t *local_addrlen,
 						struct sockaddr *remote_addr, size_t *remote_addrlen);
