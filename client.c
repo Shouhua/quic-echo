@@ -20,6 +20,8 @@
 #define MAX_STREAMS 10
 #define MAX_EVENTS 64
 
+#define LOCAL_MAX_IDLE_TIMEOUT 5
+
 int ssl_userdata_idx;
 
 typedef struct
@@ -95,9 +97,13 @@ static int handle_handshake_completed(ngtcp2_conn *conn, void *userdata)
 		return NGTCP2_ERR_CALLBACK_FAILURE;
 	}
 
-	timeout = params->max_idle_timeout == 0 ? 0 : params->max_idle_timeout / NGTCP2_SECONDS - 1;
+	timeout = params->max_idle_timeout == 0 ? UINT64_MAX : params->max_idle_timeout / NGTCP2_SECONDS;
+	if (LOCAL_MAX_IDLE_TIMEOUT < timeout)
+		timeout = LOCAL_MAX_IDLE_TIMEOUT;
 
-	ngtcp2_conn_set_keep_alive_timeout(conn, timeout * NGTCP2_SECONDS);
+	ngtcp2_conn_set_keep_alive_timeout(conn, timeout == UINT64_MAX ? UINT64_MAX : (timeout - 1) * NGTCP2_SECONDS);
+
+	fprintf(stdout, "timeout: %ld\n", timeout);
 
 	struct sockaddr_storage *ss = connection_get_remote_addr(connection);
 	char ip[INET_ADDRSTRLEN];
@@ -505,8 +511,8 @@ void keylog_callback(const SSL *ssl, const char *line)
 }
 
 int recv_crypto_data(ngtcp2_conn *conn,
-                     ngtcp2_encryption_level encryption_level, uint64_t offset,
-                     const uint8_t *data, size_t datalen, void *user_data)
+					 ngtcp2_encryption_level encryption_level, uint64_t offset,
+					 const uint8_t *data, size_t datalen, void *user_data)
 {
 #ifdef DEBUG
 	char *res = format_hex(data, datalen);
@@ -648,7 +654,7 @@ int main(int argc, char *argv[])
 	params.initial_max_streams_uni = 3;
 	params.initial_max_stream_data_bidi_local = 128 * 1024;
 	params.initial_max_data = 1024 * 1024;
-	params.max_idle_timeout = 60 * NGTCP2_SECONDS;
+	params.max_idle_timeout = LOCAL_MAX_IDLE_TIMEOUT * NGTCP2_SECONDS;
 
 	rv = ngtcp2_conn_client_new(&nt2_conn, &dcid, &scid, &path, NGTCP2_PROTO_VER_V1,
 								&callbacks, &settings, &params, NULL, client.connection);
